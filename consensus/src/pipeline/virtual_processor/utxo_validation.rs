@@ -32,6 +32,7 @@ use kaspa_utils::refs::Refs;
 use rayon::prelude::*;
 use smallvec::{smallvec, SmallVec};
 use std::{iter::once, ops::Deref};
+use crate::model::stores::headers::HeaderStoreReader;
 
 /// A context for processing the UTXO state of a block with respect to its selected parent.
 /// Note this can also be the virtual block.
@@ -138,7 +139,12 @@ impl VirtualStateProcessor {
 
         // Make sure accepted tx ids are sorted before building the merkle root
         // NOTE: when subnetworks will be enabled, the sort should consider them in order to allow grouping under a merkle subtree
-        ctx.accepted_tx_ids.sort();
+        if self.accepted_id_merkle_root.is_active(pov_daa_score) {
+            // If the accepted_id_merkle_root is active, we postfix the selected parent accepted_id_merge_root
+            ctx.accepted_tx_ids.push( self.headers_store.get_header(ctx.selected_parent()).unwrap().accepted_id_merkle_root);
+        } else {
+            ctx.accepted_tx_ids.sort();
+        }
     }
 
     /// Verify that the current block fully respects its own UTXO view. We define a block as
