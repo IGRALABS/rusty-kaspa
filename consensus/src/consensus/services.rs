@@ -93,15 +93,16 @@ impl ConsensusServices {
             storage.block_window_cache_for_difficulty.clone(),
             storage.block_window_cache_for_past_median_time.clone(),
             params.max_difficulty_target,
-            params.target_time_per_block,
-            params.sampling_activation,
-            params.legacy_difficulty_window_size,
-            params.sampled_difficulty_window_size,
-            params.min_difficulty_window_len,
-            params.difficulty_sample_rate,
-            params.legacy_past_median_time_window_size(),
+            params.prior_target_time_per_block,
+            params.crescendo.target_time_per_block,
+            params.crescendo_activation,
+            params.prior_difficulty_window_size,
+            params.crescendo.sampled_difficulty_window_size as usize,
+            params.min_difficulty_window_size,
+            params.crescendo.difficulty_sample_rate,
+            params.prior_past_median_time_window_size(),
             params.sampled_past_median_time_window_size(),
-            params.past_median_time_sample_rate,
+            params.crescendo.past_median_time_sample_rate,
         );
         let depth_manager = BlockDepthManager::new(
             params.merge_depth,
@@ -113,7 +114,7 @@ impl ConsensusServices {
         );
         let ghostdag_manager = GhostdagManager::new(
             params.genesis.hash,
-            params.ghostdag_k,
+            params.ghostdag_k(),
             storage.ghostdag_store.clone(),
             relations_services[0].clone(),
             storage.headers_store.clone(),
@@ -125,7 +126,7 @@ impl ConsensusServices {
             params.max_coinbase_payload_len,
             params.deflationary_phase_daa_score,
             params.pre_deflationary_phase_base_subsidy,
-            params.target_time_per_block,
+            params.bps(),
         );
 
         let mass_calculator = MassCalculator::new(
@@ -140,15 +141,11 @@ impl ConsensusServices {
             params.max_tx_outputs,
             params.max_signature_script_len,
             params.max_script_public_key_len,
-            params.ghostdag_k,
             params.coinbase_payload_script_public_key_max_len,
             params.coinbase_maturity,
             tx_script_cache_counters,
             mass_calculator.clone(),
-            params.storage_mass_activation,
-            params.kip10_activation,
-            params.payload_activation,
-            params.runtime_sig_op_counting,
+            params.crescendo_activation,
         );
 
         let pruning_point_manager = PruningPointManager::new(
@@ -182,7 +179,7 @@ impl ConsensusServices {
             params.genesis.hash,
             params.pruning_proof_m,
             params.anticone_finalization_depth(),
-            params.ghostdag_k,
+            params.prior_ghostdag_k, // TODO (Crescendo)
             is_consensus_exiting,
         ));
 

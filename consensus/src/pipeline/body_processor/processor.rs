@@ -28,10 +28,11 @@ use kaspa_consensus_core::{
     blockstatus::BlockStatus::{self, StatusHeaderOnly, StatusInvalid},
     config::{
         genesis::GenesisBlock,
-        params::{ForkActivation, Params},
+        params::{ForkActivation, ForkedParam, Params},
     },
     mass::MassCalculator,
     tx::Transaction,
+    KType,
 };
 use kaspa_consensus_notify::{
     notification::{BlockAddedNotification, Notification},
@@ -59,6 +60,7 @@ pub struct BlockBodyProcessor {
     // Config
     pub(super) max_block_mass: u64,
     pub(super) genesis: GenesisBlock,
+    pub(super) ghostdag_k: ForkedParam<KType>,
 
     // Stores
     pub(super) statuses_store: Arc<RwLock<DbStatusesStore>>,
@@ -87,7 +89,7 @@ pub struct BlockBodyProcessor {
     counters: Arc<ProcessingCounters>,
 
     /// Storage mass hardfork DAA score
-    pub(crate) storage_mass_activation: ForkActivation,
+    pub(crate) crescendo_activation: ForkActivation,
 }
 
 impl BlockBodyProcessor {
@@ -113,6 +115,7 @@ impl BlockBodyProcessor {
 
             max_block_mass: params.max_block_mass,
             genesis: params.genesis.clone(),
+            ghostdag_k: params.ghostdag_k(),
 
             statuses_store: storage.statuses_store.clone(),
             ghostdag_store: storage.ghostdag_store.clone(),
@@ -130,7 +133,7 @@ impl BlockBodyProcessor {
             task_manager: BlockTaskDependencyManager::new(),
             notification_root,
             counters,
-            storage_mass_activation: params.storage_mass_activation,
+            crescendo_activation: params.crescendo_activation,
         }
     }
 
